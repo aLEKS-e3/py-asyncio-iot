@@ -32,48 +32,41 @@ async def main() -> None:
         service.register_device(hue_light),
     )
 
-    await run_sequence(
-        run_parallel(
-            service.run_program(
-                [Message(hue_light_id, MessageType.SWITCH_ON)]
-            ),
-            run_sequence(
-                service.run_program(
-                    [Message(speaker_id, MessageType.SWITCH_ON)]
-                ),
-                service.run_program(
-                    [
-                        Message(
-                            speaker_id,
-                            MessageType.PLAY_SONG,
-                            "Rick Astley - Never Gonna Give You Up"
-                        )
-                    ]
-                ),
-            )
+    # start devices
+    await run_parallel(
+        service.run_program(
+            [Message(hue_light_id, MessageType.SWITCH_ON)]
         ),
-        run_parallel(
+        run_sequence(
             service.run_program(
-                [Message(hue_light_id, MessageType.SWITCH_OFF)]
+                [
+                    Message(speaker_id, MessageType.SWITCH_ON),
+                    Message(
+                        speaker_id,
+                        MessageType.PLAY_SONG,
+                        "Rick Astley - Never Gonna Give You Up"
+                    )
+                ]
             ),
-            service.run_program(
-                [Message(speaker_id, MessageType.SWITCH_OFF)]
-            ),
-            run_sequence(
-                service.run_program(
-                    [Message(toilet_id, MessageType.FLUSH)]
-                ),
-                service.run_program(
-                    [Message(toilet_id, MessageType.CLEAN)]
-                ),
-            )
         )
     )
 
+    # turn off devices
     await run_parallel(
-        service.unregister_device(toilet_id),
-        service.unregister_device(speaker_id),
-        service.unregister_device(hue_light_id)
+        service.run_program(
+            [
+                Message(hue_light_id, MessageType.SWITCH_OFF),
+                Message(speaker_id, MessageType.SWITCH_OFF)
+            ]
+        ),
+        run_sequence(
+            service.run_program(
+                [
+                    Message(toilet_id, MessageType.FLUSH),
+                    Message(toilet_id, MessageType.CLEAN)
+                ]
+            )
+        )
     )
 
 
